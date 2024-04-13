@@ -28,7 +28,7 @@ class Follows(db.Model):
 
 
 class Likes(db.Model):
-    """Mapping user likes to warbles."""
+    """Mapping user "likes" to warbles."""
 
     __tablename__ = 'likes' 
 
@@ -188,7 +188,7 @@ class Message(db.Model):
     timestamp = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow(),
+        default=datetime.now()
     )
 
     user_id = db.Column(
