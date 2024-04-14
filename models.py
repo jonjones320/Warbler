@@ -148,6 +148,23 @@ class User(db.Model):
 
         db.session.add(user)
         return user
+    
+    @classmethod
+    def edit_profile(cls, username, email, image_url, header_image_url, bio, location, password):
+        """Edits and updates user profile."""
+
+        user = User(
+            username=username,
+            email=email,
+            image_url=image_url,
+            header_image_url=header_image_url,
+            bio=bio,
+            location=location,
+            password=password
+        )
+
+        db.session.commit(user)
+        return user
 
     @classmethod
     def authenticate(cls, username, password):

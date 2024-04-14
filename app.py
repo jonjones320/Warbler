@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, LoginForm, MessageForm, ProfileForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -220,9 +220,50 @@ def stop_following(follow_id):
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
-    """Update profile for current user."""
+    """Handle profile editing.
 
-    # IMPLEMENT THIS
+    Checks authorization of user editing profile.
+
+    Shows current profile info available for editing.
+    Then adds changes to DB. Redirect to home page.
+
+    If form not valid, present form.
+
+    If the there already is a user with that username: flash message
+    and re-present form.
+    """
+
+    form = ProfileForm()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = User.query.get_or_404(g.user)
+    curr_username = User.query.get(user.username)
+
+    if form.validate_on_submit():
+        try:
+            User.edit_profile(
+                username=form.username.data,
+                email=form.email.data,
+                image_url=form.image_url.data or User.image_url.default.arg,
+                header_image_url=form.header_image_url.data,
+                bio=form.bio,
+                location=form.location,
+                password=form.password.data,
+            )
+            User.authenticate(curr_username, form.password.data)
+            db.session.commit()
+
+        except IntegrityError:
+            flash("Username already taken", 'danger')
+            return render_template('users/signup.html', form=form)
+
+        return redirect("/")
+
+    else:
+        return render_template('users/edit.html', form=form)
 
 
 @app.route('/users/delete', methods=["POST"])
