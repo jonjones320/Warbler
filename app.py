@@ -220,48 +220,50 @@ def stop_following(follow_id):
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
-    """Handle profile editing.
-
-    Checks authorization of user editing profile.
-
-    Shows current profile info available for editing.
-    Then adds changes to DB. Redirect to home page.
-
-    If form not valid, present form.
-
-    If the there already is a user with that username: flash message
-    and re-present form.
-    """
+    """Handle profile editing."""
 
     form = ProfileForm()
 
+# ensures a user is logged in
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
     
-    user = User.query.get_or_404(g.user)
-    curr_username = User.query.get(user.username)
+# gathers user object
+    user_id = g.user.id
+    user = User.query.get_or_404(user_id)
 
+# validates the edit form
     if form.validate_on_submit():
         try:
+
+# ensures the user entered correct password to edit that specific profile 
+            User.authenticate(user.username, form.password.data)
+
+# uses @classmethod 'edit_profile' to update profile
+# or uses previous user data for each category
             User.edit_profile(
-                username=form.username.data,
-                email=form.email.data,
-                image_url=form.image_url.data or User.image_url.default.arg,
-                header_image_url=form.header_image_url.data,
-                bio=form.bio,
-                location=form.location,
-                password=form.password.data,
+                user,
+                username=form.username.data 
+                    or user.username,
+                email=form.email.data 
+                    or user.email,
+                image_url=form.image_url.data 
+                    or User.image_url.default.arg or user.image_url,
+                header_image_url=form.header_image_url.data 
+                    or User.header_image_url.default.arg or user.header_image_url,
+                bio=form.bio.data 
+                    or user.bio,
+                location=form.location.data 
+                    or user.location,
             )
-            User.authenticate(curr_username, form.password.data)
-            db.session.commit()
+
+            flash("Profile updated!", "success")
+            return redirect(f'{user_id}')
 
         except IntegrityError:
             flash("Username already taken", 'danger')
-            return render_template('users/signup.html', form=form)
-
-        return redirect("/")
-
+            return render_template('users/edit.html', form=form)
     else:
         return render_template('users/edit.html', form=form)
 

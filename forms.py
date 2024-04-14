@@ -33,4 +33,4 @@ class ProfileForm(FlaskForm):
     header_image_url = StringField('Profile Header Image (Optional)')
     bio = TextAreaField('Bio', validators=[DataRequired(message="Please add something about yourself")])
     location = StringField('Location')
-    password = PasswordField('Password')
+    password = PasswordField('Password', validators=[DataRequired()])
