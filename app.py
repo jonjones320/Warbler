@@ -236,30 +236,33 @@ def profile():
 # validates the edit form
     if form.validate_on_submit():
         try:
-
+            
 # ensures the user entered correct password to edit that specific profile 
-            User.authenticate(user.username, form.password.data)
+            if User.authenticate(user.username, form.password.data):
 
 # uses @classmethod 'edit_profile' to update profile
-# or uses previous user data for each category
-            User.edit_profile(
-                user,
-                username=form.username.data 
-                    or user.username,
-                email=form.email.data 
-                    or user.email,
-                image_url=form.image_url.data 
-                    or User.image_url.default.arg or user.image_url,
-                header_image_url=form.header_image_url.data 
-                    or User.header_image_url.default.arg or user.header_image_url,
-                bio=form.bio.data 
-                    or user.bio,
-                location=form.location.data 
-                    or user.location,
-            )
+# or uses previous user data
+                User.edit_profile(
+                    user,
+                    username=form.username.data 
+                        or user.username,
+                    email=form.email.data 
+                        or user.email,
+                    image_url=form.image_url.data 
+                        or User.image_url.default.arg or user.image_url,
+                    header_image_url=form.header_image_url.data 
+                        or User.header_image_url.default.arg or user.header_image_url,
+                    bio=form.bio.data 
+                        or user.bio,
+                    location=form.location.data 
+                        or user.location,
+                    )
 
-            flash("Profile updated!", "success")
-            return redirect(f'{user_id}')
+                flash("Profile updated!", "success")
+                return redirect(f'{user_id}')
+            else:
+                flash("Incorrect password", "danger")
+                return render_template('users/edit.html', form=form)
 
         except IntegrityError:
             flash("Username already taken", 'danger')
