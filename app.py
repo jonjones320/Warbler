@@ -349,14 +349,19 @@ def homepage():
     """
 
     if g.user:
-        messages = (Message
-                    .query
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
+        user = User.query.get_or_404(g.user.id)
+        messages = []
 
+        for followee in user.following:
+            if followee.messages:
+                message = (Message
+                            .query
+                            .filter_by(user_id=followee.id)
+                            .order_by(Message.timestamp.desc())
+                            .limit(100)
+                            .first())
+                messages.append(message)
         return render_template('home.html', messages=messages)
-
     else:
         return render_template('home-anon.html')
 
