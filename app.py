@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, ProfileForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 toolbar = DebugToolbarExtension(app)
 
@@ -151,6 +151,7 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
+    likes = [like.message_id for like in Likes.query.filter_by(user_id=g.user.id).all()]
 
     # snagging messages in order from the database;
     # user.messages won't be in order by default
@@ -161,7 +162,7 @@ def users_show(user_id):
                 .limit(100)
                 .all())
     
-    return render_template('users/show.html', user=user, messages=messages)
+    return render_template('users/show.html', user=user, messages=messages, likes=likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -172,8 +173,9 @@ def show_following(user_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
+    likes = [like.message_id for like in Likes.query.filter_by(user_id=user_id).all()]
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    return render_template('users/following.html', user=user, likes=likes)
 
 
 @app.route('/users/<int:user_id>/followers')
@@ -183,9 +185,10 @@ def users_followers(user_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-
+    
+    likes = [like.message_id for like in Likes.query.filter_by(user_id=user_id).all()]
     user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    return render_template('users/followers.html', user=user, likes=likes)
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -271,6 +274,24 @@ def profile():
         return render_template('users/edit.html', form=form)
 
 
+@app.route('/users/add_like/<int:msg_id>', methods=["POST"])
+def add_remove_like(msg_id):
+    """Adds or remove a message like."""
+
+    user_id = g.user.id
+    likes = [like.message_id for like in Likes.query.filter_by(user_id=user_id).all()]
+
+    if msg_id not in likes:
+        Likes.add_like(msg_id, user_id)
+
+        return redirect('/')
+    
+    else:
+        Likes.remove_like(msg_id, user_id)
+
+        return redirect('/')
+
+
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
     """Delete user."""
@@ -313,12 +334,28 @@ def messages_add():
     return render_template('messages/new.html', form=form)
 
 
-@app.route('/messages/<int:message_id>', methods=["GET"])
+@app.route('/messages/<int:message_id>', methods=["GET", "POST"])
 def messages_show(message_id):
     """Show a message."""
 
     msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    return render_template('messages/show.html', messages=msg)
+
+
+@app.route('/messages/<int:user_id>/liked')
+def liked_messages_show(user_id):
+    """Show a users liked messages."""
+
+    user_id = g.user.id
+    liked_msgs = []
+    liked_msg_id = [like.message_id for like in Likes.query.filter_by(user_id=user_id).all()]
+
+    for msg_id in liked_msg_id:
+        new_msg = Message.query.get(msg_id)
+        liked_msgs.append(new_msg)
+
+
+    return render_template('messages/liked.html', messages=liked_msgs)
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -361,7 +398,10 @@ def homepage():
                             .limit(100)
                             .first())
                 messages.append(message)
-        return render_template('home.html', messages=messages)
+
+        likes = [like.message_id for like in Likes.query.filter_by(user_id=g.user.id).all()]
+
+        return render_template('home.html', messages=messages, likes=likes)
     else:
         return render_template('home-anon.html')
 
