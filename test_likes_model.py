@@ -1,14 +1,14 @@
-"""User model tests."""
+"""Likes model tests."""
 
 # run these tests like:
 #
-#    python -m unittest test_user_model.py
+#    python -m unittest test_likes_model.py
 
 
 import os
 from unittest import TestCase
 
-from models import db, User, Message, Follows
+from models import db, Likes, User, Message, Follows
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -29,8 +29,8 @@ from app import app
 db.create_all()
 
 
-class UserModelTestCase(TestCase):
-    """Test views for messages."""
+class LikesModelTestCase(TestCase):
+    """Test views for likes."""
 
     def setUp(self):
         """Create test client, add sample data."""
@@ -38,19 +38,26 @@ class UserModelTestCase(TestCase):
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
+        Likes.query.delete()
 
         self.client = app.test_client()
 
-    def test_user_model(self):
-        """Does basic model work?"""
+    def test_likes_model(self):
+        """Does basic likes model work?"""
 
         u = User(
             email="test@test.com",
             username="testuser",
             password="HASHED_PASSWORD"
         )
-
         db.session.add(u)
+        db.session.commit()
+
+        m = Message(
+            text="Test of text",
+            user_id=u.id
+        )
+        db.session.add(m)
         db.session.commit()
 
         # User should have no messages & no followers
