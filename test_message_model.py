@@ -63,3 +63,4 @@ class MessageModelTestCase(TestCase):
         # User should have no messages & no followers
         self.assertEqual(m.text, "Test of text")
         self.assertEqual(m.user_id, u.id)
+        self.assertEqual(len(u.messages), 1)

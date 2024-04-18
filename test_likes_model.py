@@ -60,9 +60,14 @@ class LikesModelTestCase(TestCase):
         db.session.add(m)
         db.session.commit()
 
-        # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
-        self.assertEqual(u.email, "test@test.com")
-        self.assertEqual(u.username, "testuser")
-        self.assertEqual(u.password, "HASHED_PASSWORD")
+        l = Likes(
+            user_id=u.id,
+            message_id=m.id
+        )
+        db.session.add(l)
+        db.session.commit()
+
+        # Likes should have matching user and message ID pairs.
+        self.assertEqual(l.user_id, u.id)
+        self.assertEqual(l.message_id, m.id)
+        self.assertEqual(len(u.likes), 1)
