@@ -8,7 +8,7 @@
 import os
 from unittest import TestCase
 
-from models import db, Likes, User, Message, Follows
+from models import db, User, Follows
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -53,23 +53,11 @@ class FollowsModelTestCase(TestCase):
     def test_follows_model(self):
         """Does basic follows model work?"""
 
-        # u1 = User(
-        #     email="test@test.com",
-        #     username="testuser",
-        #     password="HASHED_PASSWORD"
-        # )
-        # u3 = User(
-        #     email="3test3@3test3.com",
-        #     username="3test3user3",
-        #     password="HASHED3_3PASSWORD"
-        # )
-        # db.session.add(u1,u3)
-        # db.session.commit()
-
         f = Follows(
             user_being_followed_id=self.testuser1.id,
             user_following_id=self.testuser3.id
-        )
+            )
+
         db.session.add(f)
         db.session.commit()
 
