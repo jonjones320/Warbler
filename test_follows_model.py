@@ -36,43 +36,51 @@ class FollowsModelTestCase(TestCase):
         """Create test client, add sample data."""
 
         User.query.delete()
-        Message.query.delete()
         Follows.query.delete()
-        Likes.query.delete()
 
         self.client = app.test_client()
+
+        self.testuser1 = User.signup(username="testuser",
+                                    email="test@test.com",
+                                    password="testuser",
+                                    image_url=None)
+        
+        self.testuser3 = User.signup(username="testuser3",
+                                    email="3test@test.com",
+                                    password="3testuser",
+                                    image_url=None)
 
     def test_follows_model(self):
         """Does basic follows model work?"""
 
-        u1 = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
-        )
-        u3 = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
-        )
-        db.session.add(u1,u3)
-        db.session.commit()
+        # u1 = User(
+        #     email="test@test.com",
+        #     username="testuser",
+        #     password="HASHED_PASSWORD"
+        # )
+        # u3 = User(
+        #     email="3test3@3test3.com",
+        #     username="3test3user3",
+        #     password="HASHED3_3PASSWORD"
+        # )
+        # db.session.add(u1,u3)
+        # db.session.commit()
 
         f = Follows(
-            user_being_followed_id=u1.id,
-            user_following_id=u3.id
+            user_being_followed_id=self.testuser1.id,
+            user_following_id=self.testuser3.id
         )
         db.session.add(f)
         db.session.commit()
 
         # Follows connections should match.
-        self.assertEqual(f.user_being_followed_id, u1.id)
-        self.assertEqual(f.user_following_id, u3.id)
+        self.assertEqual(f.user_being_followed_id, self.testuser1.id)
+        self.assertEqual(f.user_following_id, self.testuser3.id)
 
         # Follows relationships should have one each.
-        self.assertEqual(len(u1.followers), 1)
-        self.assertEqual(len(u3.following), 1)
+        self.assertEqual(len(self.testuser1.followers), 1)
+        self.assertEqual(len(self.testuser3.following), 1)
 
         # Follows classmethods:
-        self.assertEqual(u1.is_followed_by(u3), 1)
-        self.assertEqual(u3.is_following(u1), 1)
+        self.assertEqual(self.testuser1.is_followed_by(self.testuser3), 1)
+        self.assertEqual(self.testuser3.is_following(self.testuser1), 1)
