@@ -8,7 +8,7 @@
 import os
 from unittest import TestCase
 
-from models import db, Likes, User, Message, Follows
+from models import db, Likes, User, Message
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -37,7 +37,6 @@ class LikesModelTestCase(TestCase):
 
         User.query.delete()
         Message.query.delete()
-        Follows.query.delete()
         Likes.query.delete()
 
         self.client = app.test_client()
@@ -71,3 +70,38 @@ class LikesModelTestCase(TestCase):
         self.assertEqual(l.user_id, u.id)
         self.assertEqual(l.message_id, m.id)
         self.assertEqual(len(u.likes), 1)
+
+
+    def test_add_remove_likes(self):
+        """Creates a user, a message, adds a like to the message, and then removes it"""
+
+        u = User(
+            email="newtest@test.com",
+            username="newtestuser",
+            password="NEW_HASHED_PASSWORD"
+        )
+        u3 = User(
+            email="3newtest@test.com",
+            username="3newtestuser",
+            password="NEW_HASHED_PASSWORD"
+        )
+        db.session.add(u, u3)
+        db.session.commit()
+
+        m = Message(
+            text="Test of text",
+            user_id=u.id
+        )
+        db.session.add(m)
+        db.session.commit()
+
+        Likes.add_like(m.id, u.id)
+        Likes.add_like(m.id, u3.id)
+
+        # Message "m" should have two likes.
+        self.assertEqual(len(Likes.query.get(m.id)), 2)
+
+        Likes.remove_like(m.id, u3.id)
+
+        # Message "m" should now have one like.
+        self.assertEqual(len(Likes.query.get(m.id)), 2)
