@@ -49,6 +49,7 @@ class FollowsModelTestCase(TestCase):
                                     email="3test@test.com",
                                     password="3testuser",
                                     image_url=None)
+        db.session.commit()
 
     def test_follows_model(self):
         """Does basic follows model work?"""
