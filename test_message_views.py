@@ -97,6 +97,7 @@ class MessageViewTestCase(TestCase):
 
             # Make sure it redirects:
             self.assertEqual(dlt.status_code, 302)
+            self.assertEqual(resp.location, f"http://localhost/users/{self.testuser.id}")
 
             # Is the message deleted?
             self.assertEqual(Message.query.all(), [])
