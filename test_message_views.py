@@ -71,3 +71,32 @@ class MessageViewTestCase(TestCase):
 
             msg = Message.query.one()
             self.assertEqual(msg.text, "Hello")
+
+
+    def test_delete_message(self):
+        """Can user delete a message?"""
+
+        # Since we need to change the session to mimic logging in,
+        # we need to use the changing-session trick:
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+
+            # Now, that the session setting is saved, we can have
+            # the rest of our test.
+
+            resp = c.post("/messages/new", data={"text": "Hello"})
+
+            # Make sure the message is created:
+            msg = Message.query.one()
+            self.assertEqual(msg.text, "Hello")
+
+            # Then delete the messsage:
+            dlt = c.post(f"/messages/{msg.id}/delete")
+
+            # Make sure it redirects:
+            self.assertEqual(dlt.status_code, 302)
+
+            # Is the message deleted?
+            self.assertEqual(Message.query.one(), False)
