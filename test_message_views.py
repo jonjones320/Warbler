@@ -99,4 +99,4 @@ class MessageViewTestCase(TestCase):
             self.assertEqual(dlt.status_code, 302)
 
             # Is the message deleted?
-            self.assertEqual(Message.query.one(), False)
+            self.assertEqual(Message.query.all(), [])
